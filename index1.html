@@ -76,12 +76,6 @@
         .start-btn { background-color: #28a745; color: white; }
         .stop-btn { background-color: #dc3545; color: white; }
         .play-btn { background-color: #007bff; color: white; }
-        .download-link {
-            text-decoration: none;
-            color: #17a2b8;
-            font-weight: bold;
-            display: none;
-        }
         audio {
             width: 100%;
             margin-top: 15px;
@@ -101,9 +95,9 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -139,6 +133,26 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .upload-progress {
+            width: 100%;
+            height: 25px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #007bff;
+            width: 0%;
+            transition: width 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
     </style>
 
     <!-- Firebase SDK v9 compat -->
@@ -150,7 +164,10 @@
 <body>
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
-        <p>กำลังอัปโหลด... กรุณารอสักครู่</p>
+        <p id="loadingText">กำลังอัปโหลด... กรุณารอสักครู่</p>
+        <div class="upload-progress" style="width: 200px;">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
     </div>
 
     <div class="container">
@@ -167,7 +184,7 @@
     <div class="message-box" id="messageBox"></div>
 
     <script>
-        // ฟังก์ชันสำหรับแสดงข้อความแจ้งเตือนแทน alert()
+        // Function to show a message box instead of alert()
         function showMessage(text, type = 'info') {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = text;
@@ -183,7 +200,7 @@
             }
             setTimeout(() => {
                 messageBox.style.display = 'none';
-            }, 3000); // ซ่อนกล่องข้อความหลังจาก 3 วินาที
+            }, 3000); // Hide the message box after 3 seconds
         }
         
         // Firebase Config
@@ -229,6 +246,7 @@
         const container = document.getElementById("questions");
         let audioChunks = {}; // Object to hold audio data for each question
         let mediaRecorder;
+        const uploadTasks = []; // Array to hold upload tasks
 
         // Create questions dynamically
         questions.forEach((q, i) => {
@@ -237,13 +255,13 @@
             div.innerHTML = `
                 <p><b>${i+1}. ${q}</b></p>
                 <div class="control-buttons">
-                    <button class="start-btn" onclick="startRecording(${i})">
+                    <button class="start-btn" data-index="${i}">
                         <i class="fas fa-microphone"></i> เริ่มอัดเสียง
                     </button>
-                    <button class="stop-btn" onclick="stopRecording(${i})" disabled>
+                    <button class="stop-btn" data-index="${i}" disabled>
                         <i class="fas fa-stop-circle"></i> หยุดอัดเสียง
                     </button>
-                    <button class="play-btn" onclick="playRecording(${i})" disabled>
+                    <button class="play-btn" data-index="${i}" disabled>
                         <i class="fas fa-play-circle"></i> ฟังเสียง
                     </button>
                     <audio id="audio${i}" controls style="display:none;"></audio>
@@ -256,7 +274,6 @@
         let currentUser = null;
         auth.onAuthStateChanged(user => {
             if (!user) {
-                // If user is not logged in, sign in anonymously for this demo
                 auth.signInAnonymously().then(cred => {
                     currentUser = cred.user;
                     document.getElementById("userNameDisplay").textContent = "ผู้ใช้งานนิรนาม";
@@ -267,6 +284,20 @@
             } else {
                 currentUser = user;
                 document.getElementById("userNameDisplay").textContent = user.email || "ผู้ใช้งานนิรนาม";
+            }
+        });
+
+        // Event listeners for buttons
+        document.addEventListener('click', e => {
+            if (e.target.classList.contains('start-btn')) {
+                const index = e.target.getAttribute('data-index');
+                startRecording(index);
+            } else if (e.target.classList.contains('stop-btn')) {
+                const index = e.target.getAttribute('data-index');
+                stopRecording(index);
+            } else if (e.target.classList.contains('play-btn')) {
+                const index = e.target.getAttribute('data-index');
+                playRecording(index);
             }
         });
 
@@ -291,14 +322,14 @@
                     const audioEl = document.getElementById("audio" + index);
                     audioEl.src = url;
                     audioEl.style.display = "block";
-                    document.querySelectorAll('.play-btn')[index].disabled = false;
+                    document.querySelector(`.play-btn[data-index="${index}"]`).disabled = false;
+                    showMessage("บันทึกเสียงเรียบร้อยแล้ว", "info");
                 };
 
                 mediaRecorder.start();
                 // Update button states
-                document.querySelectorAll('.start-btn')[index].disabled = true;
-                document.querySelectorAll('.stop-btn')[index].disabled = false;
-                showMessage("เริ่มบันทึกเสียงแล้ว", "info");
+                document.querySelector(`.start-btn[data-index="${index}"]`).disabled = true;
+                document.querySelector(`.stop-btn[data-index="${index}"]`).disabled = false;
             } catch (err) {
                 console.error("Media recording error:", err);
                 showMessage("ไม่สามารถเข้าถึงไมโครโฟนได้ กรุณาตรวจสอบสิทธิ์", "error");
@@ -310,9 +341,8 @@
             if (mediaRecorder && mediaRecorder.state !== "inactive") {
                 mediaRecorder.stop();
                 // Update button states
-                document.querySelectorAll('.start-btn')[index].disabled = false;
-                document.querySelectorAll('.stop-btn')[index].disabled = true;
-                showMessage("หยุดบันทึกเสียงแล้ว", "info");
+                document.querySelector(`.start-btn[data-index="${index}"]`).disabled = false;
+                document.querySelector(`.stop-btn[data-index="${index}"]`).disabled = true;
             }
         }
 
@@ -326,27 +356,46 @@
             }
         }
 
-        // Upload all files
+        // Upload all files with progress
         async function uploadAll() {
             if (!currentUser) {
                 return showMessage("ไม่พบผู้ใช้ กรุณาลองเข้าสู่ระบบใหม่", "error");
             }
 
+            // Check if all questions have been recorded
+            for (let i = 0; i < questions.length; i++) {
+                if (!audioChunks[i] || audioChunks[i].length === 0) {
+                    showMessage(`กรุณาอัดเสียงคำตอบข้อ ${i+1} ก่อน`, "error");
+                    return;
+                }
+            }
+
             const loadingOverlay = document.getElementById("loadingOverlay");
+            const loadingText = document.getElementById("loadingText");
+            const progressBar = document.getElementById("progressBar");
             loadingOverlay.style.display = "flex";
 
             try {
                 for (let i = 0; i < questions.length; i++) {
-                    if (!audioChunks[i] || audioChunks[i].length === 0) {
-                        showMessage(`กรุณาอัดเสียงคำตอบข้อ ${i+1} ก่อน`, "error");
-                        loadingOverlay.style.display = "none";
-                        return;
-                    }
-
                     const blob = new Blob(audioChunks[i], { type: 'audio/webm' });
                     const fileName = `${currentUser.uid}_answer${i+1}.webm`;
                     const storageRef = storage.ref(`audios/${currentUser.uid}/${fileName}`);
-                    await storageRef.put(blob);
+                    const uploadTask = storageRef.put(blob);
+
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            loadingText.textContent = `กำลังอัปโหลดไฟล์ที่ ${i+1} (${Math.round(progress)}%)`;
+                            progressBar.style.width = progress + '%';
+                            progressBar.textContent = `${Math.round(progress)}%`;
+                        }, 
+                        (error) => {
+                            console.error('Upload error:', error);
+                            throw error;
+                        }
+                    );
+
+                    await uploadTask;
                     const url = await storageRef.getDownloadURL();
 
                     await db.collection('submissions').add({
@@ -360,8 +409,7 @@
 
                 showMessage("ส่งไฟล์เสียงทั้งหมดเรียบร้อยแล้ว!", "info");
                 setTimeout(() => {
-                    // You can redirect to another page here if needed
-                    // window.location.href = "index1.html"; 
+                    // Redirect or close the app
                 }, 2000);
             } catch (err) {
                 console.error('เกิดข้อผิดพลาดในการอัปโหลด', err);
@@ -375,4 +423,6 @@
     </script>
 </body>
 </html>
+
+
 
