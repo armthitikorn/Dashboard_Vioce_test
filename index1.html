@@ -153,6 +153,11 @@
             font-weight: bold;
             font-size: 0.9em;
         }
+        .file-size {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
     </style>
 
     <!-- Firebase SDK v9 compat -->
@@ -184,7 +189,7 @@
     <div class="message-box" id="messageBox"></div>
 
     <script>
-        // Function to show a message box instead of alert()
+        // ฟังก์ชันสำหรับแสดงข้อความแจ้งเตือนแทน alert()
         function showMessage(text, type = 'info') {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = text;
@@ -200,7 +205,7 @@
             }
             setTimeout(() => {
                 messageBox.style.display = 'none';
-            }, 3000); // Hide the message box after 3 seconds
+            }, 3000); // ซ่อนกล่องข้อความหลังจาก 3 วินาที
         }
         
         // Firebase Config
@@ -246,7 +251,6 @@
         const container = document.getElementById("questions");
         let audioChunks = {}; // Object to hold audio data for each question
         let mediaRecorder;
-        const uploadTasks = []; // Array to hold upload tasks
 
         // Create questions dynamically
         questions.forEach((q, i) => {
@@ -265,6 +269,7 @@
                         <i class="fas fa-play-circle"></i> ฟังเสียง
                     </button>
                     <audio id="audio${i}" controls style="display:none;"></audio>
+                    <span class="file-size" id="fileSize${i}"></span>
                 </div>
             `;
             container.appendChild(div);
@@ -289,14 +294,14 @@
 
         // Event listeners for buttons
         document.addEventListener('click', e => {
-            if (e.target.classList.contains('start-btn')) {
-                const index = e.target.getAttribute('data-index');
+            const target = e.target.closest('button');
+            if (!target) return;
+            const index = target.getAttribute('data-index');
+            if (target.classList.contains('start-btn')) {
                 startRecording(index);
-            } else if (e.target.classList.contains('stop-btn')) {
-                const index = e.target.getAttribute('data-index');
+            } else if (target.classList.contains('stop-btn')) {
                 stopRecording(index);
-            } else if (e.target.classList.contains('play-btn')) {
-                const index = e.target.getAttribute('data-index');
+            } else if (target.classList.contains('play-btn')) {
                 playRecording(index);
             }
         });
@@ -309,7 +314,10 @@
             }
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
+                // Use a more efficient MIME type and bitrate for smaller files
+                const options = { mimeType: 'audio/mp4', audioBitsPerSecond: 128000 };
+                mediaRecorder = new MediaRecorder(stream, options);
+
                 audioChunks[index] = [];
                 mediaRecorder.ondataavailable = e => { 
                     if(e.data.size > 0) {
@@ -317,12 +325,17 @@
                     }
                 };
                 mediaRecorder.onstop = () => {
-                    const blob = new Blob(audioChunks[index], { type: 'audio/webm' });
+                    const blob = new Blob(audioChunks[index], { type: 'audio/mp4' });
                     const url = URL.createObjectURL(blob);
                     const audioEl = document.getElementById("audio" + index);
                     audioEl.src = url;
                     audioEl.style.display = "block";
                     document.querySelector(`.play-btn[data-index="${index}"]`).disabled = false;
+                    
+                    // Display file size
+                    const fileSizeKB = (blob.size / 1024).toFixed(2);
+                    document.getElementById(`fileSize${index}`).textContent = `ขนาดไฟล์: ${fileSizeKB} KB`;
+                    
                     showMessage("บันทึกเสียงเรียบร้อยแล้ว", "info");
                 };
 
@@ -377,8 +390,8 @@
 
             try {
                 for (let i = 0; i < questions.length; i++) {
-                    const blob = new Blob(audioChunks[i], { type: 'audio/webm' });
-                    const fileName = `${currentUser.uid}_answer${i+1}.webm`;
+                    const blob = new Blob(audioChunks[i], { type: 'audio/mp4' });
+                    const fileName = `${currentUser.uid}_answer${i+1}.mp4`;
                     const storageRef = storage.ref(`audios/${currentUser.uid}/${fileName}`);
                     const uploadTask = storageRef.put(blob);
 
@@ -423,6 +436,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
