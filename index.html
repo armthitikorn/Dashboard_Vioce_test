@@ -1,283 +1,243 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="utf-8"/>
-    <title>แบบทดสอบเสียงสำหรับพนักงานขายประกัน</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f0f8ff; }
-        h1 { text-align: center; }
-        .section-title { font-size: 18px; margin-top: 30px; color: #333; }
-        .question { margin-bottom: 25px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-        button { margin-right: 10px; padding: 8px 12px; }
-        a { display: block; margin-top: 10px; }
-    </style>
+  <meta charset="utf-8"/>
+  <title>แบบทดสอบเสียงสำหรับพนักงานขายประกัน</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background-color: #f9fbff; }
+    h1 { text-align: center; }
+    .section-title { font-size: 18px; margin-top: 30px; font-weight: bold; color: #333; }
+    .question { margin-bottom: 25px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    button { margin: 5px; padding: 6px 12px; }
+    a.download-link { display: block; margin-top: 8px; color: #0066cc; text-decoration: none; }
+    a.download-link:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
-    <div>ชื่อผู้ทำแบบทดสอบ: <input id="username" placeholder="กรอกชื่อของคุณ" type="text"/></div>
-    <h1>แบบทดสอบเสียงสำหรับพนักงานขายประกัน</h1>
-    <div class="section-title">คำถามก่อนปิดการขาย (ต้นสาย)</div>
-    <div class="question">
-        <label>คำถามที่ 1: ขอบคุณครับ แต่ตอนนี้ยังไม่สนใจประกัน</label><br/>
-        <button onclick="startRecording(1)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(1)">หยุดอัดเสียง</button>
-        <a id="downloadLink1" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 2: ขอเวลาคิดดูก่อนครับ</label><br/>
-        <button onclick="startRecording(2)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(2)">หยุดอัดเสียง</button>
-        <a id="downloadLink2" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 3: ยังไม่แน่ใจว่าประกันนี้เหมาะกับผมหรือเปล่า</label><br/>
-        <button onclick="startRecording(3)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(3)">หยุดอัดเสียง</button>
-        <a id="downloadLink3" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 4: ขอปรึกษาครอบครัวก่อนครับ</label><br/>
-        <button onclick="startRecording(4)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(4)">หยุดอัดเสียง</button>
-        <a id="downloadLink4" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 5: ตอนนี้มีประกันอยู่แล้วครับ</label><br/>
-        <button onclick="startRecording(5)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(5)">หยุดอัดเสียง</button>
-        <a id="downloadLink5" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 6: ขอข้อมูลเพิ่มเติมก่อนตัดสินใจครับ</label><br/>
-        <button onclick="startRecording(6)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(6)">หยุดอัดเสียง</button>
-        <a id="downloadLink6" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 7: ยังไม่สะดวกคุยตอนนี้ครับ</label><br/>
-        <button onclick="startRecording(7)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(7)">หยุดอัดเสียง</button>
-        <a id="downloadLink7" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 8: ขอเปรียบเทียบกับบริษัทอื่นก่อนครับ</label><br/>
-        <button onclick="startRecording(8)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(8)">หยุดอัดเสียง</button>
-        <a id="downloadLink8" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 9: ยังไม่เข้าใจเงื่อนไขทั้งหมดครับ</label><br/>
-        <button onclick="startRecording(9)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(9)">หยุดอัดเสียง</button>
-        <a id="downloadLink9" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 10: ขอให้ส่งรายละเอียดทางอีเมลก่อนครับ</label><br/>
-        <button onclick="startRecording(10)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(10)">หยุดอัดเสียง</button>
-        <a id="downloadLink10" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="section-title">คำถามหลังปิดการขาย</div>
-    <div class="question">
-        <label>คำถามที่ 11: ขอเปลี่ยนใจไม่ทำประกันแล้วครับ</label><br/>
-        <button onclick="startRecording(11)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(11)">หยุดอัดเสียง</button>
-        <a id="downloadLink11" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 12: รู้สึกว่าค่าเบี้ยแพงเกินไปครับ</label><br/>
-        <button onclick="startRecording(12)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(12)">หยุดอัดเสียง</button>
-        <a id="downloadLink12" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 13: พบว่ามีเงื่อนไขที่ไม่ตรงกับที่ตกลงไว้</label><br/>
-        <button onclick="startRecording(13)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(13)">หยุดอัดเสียง</button>
-        <a id="downloadLink13" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 14: ขอคืนเงินครับ</label><br/>
-        <button onclick="startRecording(14)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(14)">หยุดอัดเสียง</button>
-        <a id="downloadLink14" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 15: ไม่สะดวกชำระเงินตอนนี้ครับ</label><br/>
-        <button onclick="startRecording(15)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(15)">หยุดอัดเสียง</button>
-        <a id="downloadLink15" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 16: ขอเลื่อนการเริ่มต้นกรมธรรม์ครับ</label><br/>
-        <button onclick="startRecording(16)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(16)">หยุดอัดเสียง</button>
-        <a id="downloadLink16" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 17: มีข้อสงสัยเกี่ยวกับความคุ้มครองครับ</label><br/>
-        <button onclick="startRecording(17)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(17)">หยุดอัดเสียง</button>
-        <a id="downloadLink17" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 18: ต้องการยกเลิกกรมธรรม์ครับ</label><br/>
-        <button onclick="startRecording(18)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(18)">หยุดอัดเสียง</button>
-        <a id="downloadLink18" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 19: พบว่ามีประกันอื่นที่คุ้มค่ากว่า</label><br/>
-        <button onclick="startRecording(19)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(19)">หยุดอัดเสียง</button>
-        <a id="downloadLink19" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <div class="question">
-        <label>คำถามที่ 20: ขอให้ติดต่อกลับภายหลังครับ</label><br/>
-        <button onclick="startRecording(20)">เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(20)">หยุดอัดเสียง</button>
-        <a id="downloadLink20" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
-    </div>
-    <button id="downloadAllBtn">📥 ดาวน์โหลดไฟล์เสียงทั้งหมด (ZIP)</button>
-    <hr>
-    <h2>สำหรับผู้สอน: รายชื่อไฟล์เสียงที่อัปโหลด</h2>
-    <ul id="fileList"></ul>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script type="module">
+  <div>
+    ชื่อผู้ทำแบบทดสอบ: <input id="username" placeholder="กรอกชื่อของคุณ" type="text"/>
+  </div>
+  <h1>🎤 แบบทดสอบเสียงสำหรับพนักงานขายประกัน</h1>
+
+  <!-- 🔹 คำถามทั้งหมด 20 ข้อ -->
+  <div class="section-title">คำถามก่อนปิดการขาย (ต้นสาย)</div>
+  <div class="question"><label>1. ขอบคุณครับ แต่ตอนนี้ยังไม่สนใจประกัน</label><br/>
+    <button onclick="startRecording(1)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(1)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink1" class="download-link" style="display:none;">📥 ดาวน์โหลดเสียงคำตอบ</a>
+  </div>
+  <div class="question"><label>2. ขอเวลาคิดดูก่อนครับ</label><br/>
+    <button onclick="startRecording(2)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(2)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink2" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>3. ประกันมันซับซ้อนเกินไป</label><br/>
+    <button onclick="startRecording(3)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(3)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink3" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>4. ตอนนี้ยังไม่พร้อมทางการเงิน</label><br/>
+    <button onclick="startRecording(4)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(4)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink4" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>5. ขอคุยกับครอบครัวก่อน</label><br/>
+    <button onclick="startRecording(5)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(5)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink5" class="download-link" style="display:none;"></a>
+  </div>
+
+  <div class="section-title">คำถามระหว่างปิดการขาย (กลางสาย)</div>
+  <div class="question"><label>6. ทำไมเบี้ยถึงสูงจัง</label><br/>
+    <button onclick="startRecording(6)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(6)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink6" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>7. ฉันกลัวว่าบริษัทจะไม่มั่นคง</label><br/>
+    <button onclick="startRecording(7)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(7)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink7" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>8. เพื่อนบอกว่าประกันไม่คุ้ม</label><br/>
+    <button onclick="startRecording(8)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(8)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink8" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>9. ทำไมต้องทำตอนนี้เลย</label><br/>
+    <button onclick="startRecording(9)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(9)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink9" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>10. ฉันมีประกันอยู่แล้ว</label><br/>
+    <button onclick="startRecording(10)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(10)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink10" class="download-link" style="display:none;"></a>
+  </div>
+
+  <div class="section-title">คำถามหลังปิดการขาย (ท้ายสาย)</div>
+  <div class="question"><label>11. ถ้าเกิดอะไรขึ้น ฉันจะติดต่อใคร</label><br/>
+    <button onclick="startRecording(11)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(11)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink11" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>12. ประกันนี้คุ้มครองอะไรบ้าง</label><br/>
+    <button onclick="startRecording(12)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(12)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink12" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>13. ถ้าฉันจ่ายไม่ไหวจะเกิดอะไรขึ้น</label><br/>
+    <button onclick="startRecording(13)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(13)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink13" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>14. ถ้าฉันเสียชีวิตเร็ว ใครจะได้ผลประโยชน์</label><br/>
+    <button onclick="startRecording(14)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(14)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink14" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>15. ฉันจะยกเลิกได้ไหม</label><br/>
+    <button onclick="startRecording(15)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(15)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink15" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>16. ถ้ามีโรคประจำตัวจะสมัครได้ไหม</label><br/>
+    <button onclick="startRecording(16)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(16)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink16" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>17. ใช้สิทธิ์ลดหย่อนภาษีได้หรือไม่</label><br/>
+    <button onclick="startRecording(17)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(17)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink17" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>18. มีแผนที่เบี้ยถูกกว่านี้ไหม</label><br/>
+    <button onclick="startRecording(18)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(18)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink18" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>19. ฉันไม่เข้าใจสัญญาเลย</label><br/>
+    <button onclick="startRecording(19)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(19)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink19" class="download-link" style="display:none;"></a>
+  </div>
+  <div class="question"><label>20. ทำไมต้องซื้อกับคุณ</label><br/>
+    <button onclick="startRecording(20)">▶️ เริ่มอัดเสียง</button>
+    <button onclick="stopRecording(20)">⏹️ หยุดอัดเสียง</button>
+    <a id="downloadLink20" class="download-link" style="display:none;"></a>
+  </div>
+
+  <!-- ปุ่มรวม -->
+  <button id="downloadAllBtn">📥 ดาวน์โหลดไฟล์เสียงทั้งหมด (ZIP)</button>
+  <hr>
+  <h2>📂 รายชื่อไฟล์เสียงที่อัปโหลด</h2>
+  <ul id="fileList"></ul>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
     import { getStorage, ref, uploadBytes, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyA4OrZERUoxWPiShCEWVvz1MK9cYGO3_K8",
-        authDomain: "new-record-3ccd6.firebaseapp.com",
-        projectId: "new-record-3ccd6",
-        storageBucket: "new-record-3ccd6.appspot.com",
-        messagingSenderId: "1065863160189",
-        appId: "1:1065863160189:web:25313e55b0733f5e126c14",
-        measurementId: "G-JW6N2HYR58"
+      apiKey: "AIzaSyA4OrZERUoxWPiShCEWVvz1MK9cYGO3_K8",
+      authDomain: "new-record-3ccd6.firebaseapp.com",
+      projectId: "new-record-3ccd6",
+      storageBucket: "new-record-3ccd6.appspot.com",
+      messagingSenderId: "1065863160189",
+      appId: "1:1065863160189:web:25313e55b0733f5e126c14",
+      measurementId: "G-JW6N2HYR58"
     };
-
     const app = initializeApp(firebaseConfig);
     const storage = getStorage(app);
     const db = getFirestore(app);
 
-    let recorders = [];
-    let audioChunksList = [];
+    let recorders = [], audioChunksList = [];
     const fileListElement = document.getElementById('fileList');
 
-    // ▶️ เริ่มอัดเสียง
     window.startRecording = async function(index) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const recorder = new MediaRecorder(stream);
-            const audioChunks = [];
-            recorder.ondataavailable = e => audioChunks.push(e.data);
-            recorder.start();
-            recorders[index] = recorder;
-            audioChunksList[index] = audioChunks;
-        } catch (error) {
-            console.error("ไม่สามารถเข้าถึงไมโครโฟนได้:", error);
-            alert("ไม่สามารถเข้าถึงไมโครโฟนได้ โปรดตรวจสอบการอนุญาตใช้งาน");
-        }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const recorder = new MediaRecorder(stream);
+        const audioChunks = [];
+        recorder.ondataavailable = e => audioChunks.push(e.data);
+        recorder.start();
+        recorders[index] = recorder;
+        audioChunksList[index] = audioChunks;
+      } catch (error) { alert("⚠️ โปรดอนุญาตไมโครโฟน"); }
     };
 
-    // ⏹️ หยุดอัดเสียง + แสดงปุ่มดาวน์โหลด
     window.stopRecording = function(index) {
-        const recorder = recorders[index];
-        const audioChunks = audioChunksList[index];
-        if (!recorder) {
-            console.error("ไม่มีตัวบันทึกเสียงที่ทำงานอยู่");
-            return;
-        }
-        
-        recorder.stop();
-        recorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            const username = document.getElementById("username").value || "anonymous";
-            const audioFileName = `${username}_answer_${index}.webm`;
-            const storageRef = ref(storage, 'answers/' + audioFileName);
+      const recorder = recorders[index], audioChunks = audioChunksList[index];
+      if (!recorder) return;
+      recorder.stop();
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const username = document.getElementById("username").value || "anonymous";
+        const audioFileName = `${username}_answer_${index}.webm`;
+        const storageRef = ref(storage, 'answers/' + audioFileName);
 
-            try {
-                // ✅ อัปโหลดไฟล์ไป Firebase
-                await uploadBytes(storageRef, audioBlob);
-                await addDoc(collection(db, "recordings"), {
-                    fileName: audioFileName,
-                    username: username,
-                    questionIndex: index,
-                    timestamp: new Date().toISOString(),
-                    storagePath: storageRef.fullPath
-                });
+        try {
+          await uploadBytes(storageRef, audioBlob);
+          await addDoc(collection(db, "recordings"), {
+            fileName: audioFileName,
+            username: username,
+            questionIndex: index,
+            timestamp: new Date().toISOString()
+          });
 
-                // ✅ สร้าง URL สำหรับดาวน์โหลดทันที
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const downloadLink = document.getElementById('downloadLink' + index);
-                if (downloadLink) {
-                    downloadLink.href = audioUrl;
-                    downloadLink.download = audioFileName;
-                    downloadLink.style.display = 'inline-block';  // โชว์เป็นปุ่ม
-                    downloadLink.textContent = '📥 ดาวน์โหลดเสียงคำตอบที่ ' + index;
-                }
-
-                fetchAndDisplayFiles();
-            } catch (error) {
-                console.error("เกิดข้อผิดพลาดในการอัปโหลดหรือบันทึกข้อมูล:", error);
-                alert("เกิดข้อผิดพลาด: " + error.message);
-            }
-        };
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const downloadLink = document.getElementById('downloadLink' + index);
+          downloadLink.href = audioUrl;
+          downloadLink.download = audioFileName;
+          downloadLink.textContent = '📥 ดาวน์โหลดเสียงคำตอบที่ ' + index;
+          downloadLink.style.display = 'block';
+          fetchAndDisplayFiles();
+        } catch (e) { alert("❌ อัปโหลดไม่สำเร็จ: " + e.message); }
+      };
     };
 
-    // 📂 ดึงรายชื่อไฟล์จาก Firebase
     async function fetchAndDisplayFiles() {
-        fileListElement.innerHTML = '';
-        try {
-            const listRef = ref(storage, 'answers/');
-            const res = await listAll(listRef);
-            if (res.items.length === 0) {
-                fileListElement.innerHTML = '<li>ยังไม่มีไฟล์เสียงที่อัปโหลด</li>';
-                return;
-            }
-            for (const itemRef of res.items) {
-                const url = await getDownloadURL(itemRef);
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = url;
-                a.textContent = itemRef.name;
-                a.target = "_blank";
-                li.appendChild(a);
-                fileListElement.appendChild(li);
-            }
-        } catch (error) {
-            console.error("เกิดข้อผิดพลาดในการดึงรายชื่อไฟล์:", error);
+      fileListElement.innerHTML = '';
+      try {
+        const listRef = ref(storage, 'answers/');
+        const res = await listAll(listRef);
+        if (res.items.length === 0) {
+          fileListElement.innerHTML = '<li>ยังไม่มีไฟล์อัปโหลด</li>'; return;
         }
+        for (const itemRef of res.items) {
+          const url = await getDownloadURL(itemRef);
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = url; a.textContent = itemRef.name; a.target = "_blank";
+          li.appendChild(a); fileListElement.appendChild(li);
+        }
+      } catch (e) { console.error("โหลดไฟล์ล้มเหลว:", e); }
     }
     fetchAndDisplayFiles();
 
-    // 📦 ดาวน์โหลดทั้งหมดเป็น ZIP
     document.getElementById("downloadAllBtn").onclick = async () => {
-        const zip = new JSZip();
-        const username = document.getElementById("username").value || "anonymous";
-        try {
-            const listRef = ref(storage, 'answers/');
-            const res = await listAll(listRef);
-            for (const itemRef of res.items) {
-                const url = await getDownloadURL(itemRef);
-                const response = await fetch(url);
-                const blob = await response.blob();
-                zip.file(itemRef.name, blob);
-            }
-            const content = await zip.generateAsync({ type: "blob" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(content);
-            a.download = username + "_voice_answers.zip";
-            a.click();
-        } catch (error) {
-            console.error("เกิดข้อผิดพลาดในการสร้างไฟล์ ZIP:", error);
-            alert("ไม่สามารถสร้างไฟล์ ZIP ได้ โปรดลองอีกครั้ง");
+      const zip = new JSZip();
+      const username = document.getElementById("username").value || "anonymous";
+      try {
+        const listRef = ref(storage, 'answers/');
+        const res = await listAll(listRef);
+        for (const itemRef of res.items) {
+          const url = await getDownloadURL(itemRef);
+          const response = await fetch(url);
+          const blob = await response.blob();
+          zip.file(itemRef.name, blob);
         }
+        const content = await zip.generateAsync({ type: "blob" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(content);
+        a.download = username + "_voice_answers.zip";
+        a.click();
+      } catch (e) { alert("❌ ZIP ล้มเหลว: " + e.message); }
     };
-</script>
+  </script>
 </body>
 </html>
+
 
 
 
