@@ -2,77 +2,113 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>อัดเสียงคำตอบประกัน</title>
+  <title>แบบทดสอบเสียงพนักงานขายประกัน</title>
   <style>
-    body { font-family: Tahoma, sans-serif; padding: 20px; }
-    .question { margin-bottom: 20px; }
-    button { margin: 3px; }
-    a { margin-left: 10px; }
-    audio { display: block; margin-top: 5px; }
+    body { font-family: Tahoma, sans-serif; background: #f7f9fc; padding: 20px; }
+    h1 { text-align: center; }
+    .question {
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button { margin-right: 8px; }
   </style>
 </head>
 <body>
-  <h2>🎤 ระบบอัดเสียงคำตอบลูกค้า (20 คำถาม)</h2>
-  <label>ชื่อผู้ใช้งาน: <input type="text" id="username" placeholder="กรอกชื่อที่นี่"></label>
+  <h1>🎤 แบบทดสอบเสียงสำหรับพนักงานขายประกัน</h1>
+  <p><b>ชื่อผู้ทำแบบทดสอบ:</b> <input type="text" placeholder="กรอกชื่อของคุณ"></p>
 
   <div id="questions"></div>
 
   <script>
-    // เก็บตัวแปร recorder และ chunks
-    let recorders = {};
-    let audioChunksList = {};
+    const questions = [
+      "ขอบคุณครับ แต่ตอนนี้ยังไม่สนใจประกัน",
+      "ขอเวลาตัดสินใจก่อนครับ",
+      "ประกันมันซับซ้อนเกินไป",
+      "ตอนนี้ยังไม่พร้อมทางการเงิน",
+      "ขอคุยกับครอบครัวก่อน",
+      "ผมมีประกันอยู่หลายเล่มแล้ว",
+      "กลัวว่าผ่อนส่งไม่ไหว",
+      "ยังไม่เชื่อมั่นในบริษัท",
+      "ขอดูข้อมูลละเอียดกว่านี้",
+      "ตอนนี้มีภาระหนี้สินอยู่",
+      "ผมกำลังศึกษาอยู่หลายที่",
+      "ผมต้องการเปรียบเทียบก่อน",
+      "ขอเวลาคิดทบทวนอีกหน่อย",
+      "ยังไม่แน่ใจว่าเหมาะกับตัวเอง",
+      "ผมมีญาติทำประกันอยู่แล้ว",
+      "กลัวว่าสัญญาจะไม่คุ้มค่า",
+      "ยังไม่เข้าใจเรื่องเงื่อนไขมากพอ",
+      "อยากได้แบบที่ถูกกว่านี้",
+      "ขอให้ติดต่อกลับมาใหม่ทีหลัง",
+      "ตอนนี้ยังไม่อยากตัดสินใจ"
+    ];
 
-    // สร้าง UI สำหรับ 20 คำถาม
-    const questionContainer = document.getElementById("questions");
-    for (let i = 1; i <= 20; i++) {
-      questionContainer.innerHTML += `
-        <div class="question">
-          <label>คำถามที่ ${i}</label><br/>
-          <button onclick="startRecording(${i})">▶️ เริ่มอัดเสียง</button>
-          <button onclick="stopRecording(${i})">⏹️ หยุดอัดเสียง</button>
-          <a id="downloadLink${i}" style="display:none;"></a>
-          <audio id="audioPlayer${i}" controls style="display:none;"></audio>
-        </div>
+    const container = document.getElementById("questions");
+
+    questions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `
+        <p><b>${i+1}. ${q}</b></p>
+        <button onclick="startRecording(${i})">🎙️ เริ่มอัดเสียง</button>
+        <button onclick="stopRecording(${i})">⏹️ หยุดอัดเสียง</button>
+        <button onclick="playRecording(${i})" id="playBtn${i}" disabled>▶️ ฟังเสียง</button>
+        <a id="download${i}" style="display:none;" download="answer${i+1}.webm">⬇️ ดาวน์โหลด</a>
+        <audio id="audio${i}" controls style="display:none;"></audio>
       `;
+      container.appendChild(div);
+    });
+
+    let mediaRecorder;
+    let audioChunks = {};
+    
+    async function startRecording(index) {
+      if (!navigator.mediaDevices) {
+        alert("เบราว์เซอร์นี้ไม่รองรับการอัดเสียง");
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks[index] = [];
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunks[index].push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks[index], { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+
+        // แสดงปุ่มฟังเสียง
+        const audioEl = document.getElementById("audio"+index);
+        audioEl.src = url;
+        audioEl.style.display = "block";
+
+        // เปิดปุ่ม Play
+        document.getElementById("playBtn"+index).disabled = false;
+
+        // สร้างปุ่มดาวน์โหลด
+        const downloadLink = document.getElementById("download"+index);
+        downloadLink.href = url;
+        downloadLink.style.display = "inline-block";
+      };
+
+      mediaRecorder.start();
     }
 
-    // เริ่มอัดเสียง
-    window.startRecording = async function(index) {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      recorders[index] = recorder;
-      audioChunksList[index] = [];
+    function stopRecording(index) {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+    }
 
-      recorder.ondataavailable = e => audioChunksList[index].push(e.data);
-      recorder.start();
-      alert(`🎙️ เริ่มอัดเสียงคำถามที่ ${index} แล้ว`);
-    };
-
-    // หยุดอัดเสียง
-    window.stopRecording = function(index) {
-      const recorder = recorders[index], audioChunks = audioChunksList[index];
-      if (!recorder) return;
-      recorder.stop();
-
-      recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const username = document.getElementById("username").value || "anonymous";
-        const audioFileName = `${username}_answer_${index}.webm`;
-
-        // สร้างลิงก์ดาวน์โหลด
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const downloadLink = document.getElementById('downloadLink' + index);
-        downloadLink.href = audioUrl;
-        downloadLink.download = audioFileName;
-        downloadLink.textContent = `📥 ดาวน์โหลดไฟล์เสียงคำตอบ ${index}`;
-        downloadLink.style.display = 'inline-block';
-
-        // เพิ่ม Player ฟังเสียง
-        const audioPlayer = document.getElementById('audioPlayer' + index);
-        audioPlayer.src = audioUrl;
-        audioPlayer.style.display = 'block';
-      };
-    };
+    function playRecording(index) {
+      const audioEl = document.getElementById("audio"+index);
+      audioEl.play();
+    }
   </script>
 </body>
 </html>
