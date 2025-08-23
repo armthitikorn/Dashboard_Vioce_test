@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8"/>
+    <title>แบบทดสอบเสียงสำหรับพนักงานขายประกัน</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f0f8ff; }
+        h1 { text-align: center; }
+        .section-title { font-size: 18px; margin-top: 30px; color: #333; }
+        .question { margin-bottom: 25px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+        button { margin-right: 10px; padding: 8px 12px; }
+        a { display: block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div>ชื่อผู้ทำแบบทดสอบ: <input id="username" placeholder="กรอกชื่อของคุณ" type="text"/></div>
+    <h1>แบบทดสอบเสียงสำหรับพนักงานขายประกัน</h1>
+
+    <div class="section-title">คำถามก่อนปิดการขาย (ต้นสาย)</div>
+    <div class="question">
+        <label>คำถามที่ 1: ขอบคุณครับ แต่ตอนนี้ยังไม่สนใจประกัน</label><br/>
+        <button onclick="startRecording(1)">เริ่มอัดเสียง</button>
+        <button onclick="stopRecording(1)">หยุดอัดเสียง</button>
+        <a id="downloadLink1" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
+    </div>
+    <div class="section-title">คำถามหลังปิดการขาย</div>
+    <div class="question">
+        <label>คำถามที่ 11: ขอเปลี่ยนใจไม่ทำประกันแล้วครับ</label><br/>
+        <button onclick="startRecording(11)">เริ่มอัดเสียง</button>
+        <button onclick="stopRecording(11)">หยุดอัดเสียง</button>
+        <a id="downloadLink11" style="display:none;">ดาวน์โหลดเสียงคำตอบ</a>
+    </div>
+
+    <button id="downloadAllBtn">📥 ดาวน์โหลดไฟล์เสียงทั้งหมด (ZIP)</button>
+    <hr>
+    
+    <h2>สำหรับผู้สอน: รายชื่อไฟล์เสียงที่อัปโหลด</h2>
+    <ul id="fileList"></ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script type="module">
+        // นำเข้าโมดูลจากไฟล์ firebase.js
+        import { storage, db } from "./firebase.js";
+
+        // นำเข้าฟังก์ชันที่จำเป็นจาก Firebase SDK
+        import { ref, uploadBytes, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
+        import { collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+        let recorders = [];
+        let audioChunksList = [];
+        const fileListElement = document.getElementById('fileList');
+
+        window.startRecording = async function(index) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const recorder = new MediaRecorder(stream);
+                const audioChunks = [];
+                recorder.ondataavailable = e => audioChunks.push(e.data);
+                recorder.start();
+                recorders[index] = recorder;
+                audioChunksList[index] = audioChunks;
+            } catch (error) {
+                console.error("ไม่สามารถเข้าถึงไมโครโฟนได้:", error);
+                alert("ไม่สามารถเข้าถึงไมโครโฟนได้ โปรดตรวจสอบการอนุญาตใช้งาน");
+            }
+        };
+
+        window.stopRecording = function(index) {
+            const recorder = recorders[index];
+            const audioChunks = audioChunksList[index];
+            if (!recorder) return;
+            
+            recorder.stop();
+            recorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const username = document.getElementById("username").value || "anonymous";
+                const audioFileName = `${username}_answer_${index}.webm`;
+                const storageRef = ref(storage, 'answers/' + audioFileName);
+
+                try {
+                    // อัปโหลดไฟล์เสียงไปที่ Firebase Storage
+                    await uploadBytes(storageRef, audioBlob);
+                    console.log("อัปโหลดไฟล์เสียงเรียบร้อยแล้ว!");
+
+                    // บันทึกข้อมูลการอัปโหลดลงใน Firestore
+                    await addDoc(collection(db, "recordings"), {
+                        fileName: audioFileName,
+                        username: username,
+                        questionIndex: index,
+                        timestamp: new Date().toISOString(),
+                        storagePath: storageRef.fullPath
+                    });
+                    console.log("บันทึกข้อมูลลง Firestore เรียบร้อยแล้ว!");
+
+                    // สร้างลิงก์ดาวน์โหลดชั่วคราว
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const downloadLink = document.getElementById('downloadLink' + index);
+                    downloadLink.href = audioUrl;
+                    downloadLink.download = audioFileName;
+                    downloadLink.style.display = 'block';
+                    downloadLink.textContent = 'ดาวน์โหลดเสียงคำตอบที่ ' + index;
+
+                } catch (error) {
+                    console.error("เกิดข้อผิดพลาดในการอัปโหลดหรือบันทึกข้อมูล:", error);
+                    alert("เกิดข้อผิดพลาด: " + error.message);
+                }
+            };
+        };
+
+        // ฟังก์ชันสำหรับดึงรายการไฟล์จาก Firebase Storage
+        async function fetchAndDisplayFiles() {
+            fileListElement.innerHTML = '';
+            try {
+                const listRef = ref(storage, 'answers/');
+                const res = await listAll(listRef);
+                const items = res.items;
+
+                if (items.length === 0) {
+                    fileListElement.innerHTML = '<li>ยังไม่มีไฟล์เสียงที่อัปโหลด</li>';
+                    return;
+                }
+
+                items.forEach(async (itemRef) => {
+                    const url = await getDownloadURL(itemRef);
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.textContent = itemRef.name;
+                    a.target = "_blank";
+                    li.appendChild(a);
+                    fileListElement.appendChild(li);
+                });
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการดึงรายชื่อไฟล์:", error);
+            }
+        }
+        
+        // ดึงรายการไฟล์เมื่อหน้าเว็บโหลดเสร็จ
+        fetchAndDisplayFiles();
+
+        document.getElementById("downloadAllBtn").onclick = async () => {
+            const zip = new JSZip();
+            const username = document.getElementById("username").value || "anonymous";
+
+            try {
+                const listRef = ref(storage, 'answers/');
+                const res = await listAll(listRef);
+
+                for (const itemRef of res.items) {
+                    const url = await getDownloadURL(itemRef);
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    zip.file(itemRef.name, blob);
+                }
+                
+                const content = await zip.generateAsync({ type: "blob" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(content);
+                a.download = username + "_voice_answers.zip";
+                a.click();
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการสร้างไฟล์ ZIP:", error);
+                alert("ไม่สามารถสร้างไฟล์ ZIP ได้ โปรดลองอีกครั้ง");
+            }
+        };
+    </script>
+</body>
+</html>
