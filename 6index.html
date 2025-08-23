@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>แบบทดสอบเสียงพนักงานขายประกัน</title>
+  <style>
+    body { font-family: Tahoma, sans-serif; background: #f7f9fc; padding: 20px; }
+    h1 { text-align: center; }
+    .question {
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button { margin-right: 8px; margin-top: 5px; }
+  </style>
+
+  <!-- Firebase SDK v9 compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <h1>🎤 แบบทดสอบเสียงสำหรับพนักงานขายประกัน</h1>
+  <p><b>ชื่อผู้ทำแบบทดสอบ:</b> <span id="userNameDisplay">กำลังโหลด...</span></p>
+
+  <div id="questions"></div>
+
+  <!-- ปุ่มส่งไฟล์ทั้งหมด -->
+  <button id="submitAllBtn">📤 ส่งไฟล์เสียงทั้งหมด & ไปหน้าต่อไป</button>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyA4OrZERUoxWPiShCEWVvz1MK9cYGO3_K8",
+      authDomain: "new-record-3ccd6.firebaseapp.com",
+      projectId: "new-record-3ccd6",
+      storageBucket: "new-record-3ccd6.appspot.com",
+      messagingSenderId: "1065863160189",
+      appId: "1:1065863160189:web:25313e55b0733f5e126c14",
+      measurementId: "G-JW6N2HYR58"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    const questions = [
+      "ขอบคุณครับ แต่ตอนนี้ยังไม่สนใจประกัน",
+      "ขอเวลาตัดสินใจก่อนครับ",
+      "ประกันมันซับซ้อนเกินไป",
+      "ตอนนี้ยังไม่พร้อมทางการเงิน",
+      "ขอคุยกับครอบครัวก่อน",
+      "ผมมีประกันอยู่หลายเล่มแล้ว",
+      "กลัวว่าผ่อนส่งไม่ไหว",
+      "ยังไม่เชื่อมั่นในบริษัท",
+      "ขอดูข้อมูลละเอียดกว่านี้",
+      "ตอนนี้มีภาระหนี้สินอยู่",
+      "ผมกำลังศึกษาอยู่หลายที่",
+      "ผมต้องการเปรียบเทียบก่อน",
+      "ขอเวลาคิดทบทวนอีกหน่อย",
+      "ยังไม่แน่ใจว่าเหมาะกับตัวเอง",
+      "ผมมีญาติทำประกันอยู่แล้ว",
+      "กลัวว่าสัญญาจะไม่คุ้มค่า",
+      "ยังไม่เข้าใจเรื่องเงื่อนไขมากพอ",
+      "อยากได้แบบที่ถูกกว่านี้",
+      "ขอให้ติดต่อกลับมาใหม่ทีหลัง",
+      "ตอนนี้ยังไม่อยากตัดสินใจ"
+    ];
+
+    const container = document.getElementById("questions");
+    let audioChunks = {};
+    let mediaRecorder;
+
+    // สร้างคำถามแต่ละข้อ
+    questions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `
+        <p><b>${i+1}. ${q}</b></p>
+        <button onclick="startRecording(${i})">🎙️ เริ่มอัดเสียง</button>
+        <button onclick="stopRecording(${i})">⏹️ หยุดอัดเสียง</button>
+        <button onclick="playRecording(${i})" id="playBtn${i}" disabled>▶️ ฟังเสียง</button>
+        <a id="download${i}" style="display:none;" download="answer${i+1}.webm">⬇️ ดาวน์โหลด</a>
+        <audio id="audio${i}" controls style="display:none;"></audio>
+      `;
+      container.appendChild(div);
+    });
+
+    // ตรวจสอบผู้ใช้ล็อกอิน
+    let currentUser = null;
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert("กรุณาเข้าสู่ระบบก่อนทำแบบทดสอบ");
+        window.location.href = "index.html";
+      } else {
+        currentUser = user;
+        document.getElementById("userNameDisplay").textContent = user.email || "ผู้ใช้งาน";
+      }
+    });
+
+    async function startRecording(index) {
+      if (!navigator.mediaDevices) {
+        alert("เบราว์เซอร์นี้ไม่รองรับการอัดเสียง");
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks[index] = [];
+      mediaRecorder.ondataavailable = e => { if(e.data.size>0) audioChunks[index].push(e.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks[index], { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        const audioEl = document.getElementById("audio"+index);
+        audioEl.src = url;
+        audioEl.style.display = "block";
+        document.getElementById("playBtn"+index).disabled = false;
+        const downloadLink = document.getElementById("download"+index);
+        downloadLink.href = url;
+        downloadLink.style.display = "inline-block";
+      };
+      mediaRecorder.start();
+    }
+
+    function stopRecording(index) {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+    }
+
+    function playRecording(index) {
+      document.getElementById("audio"+index).play();
+    }
+
+    // อัปโหลดไฟล์ทั้งหมด
+    async function uploadAll() {
+      if (!currentUser) return alert("ไม่พบผู้ใช้ กรุณาเข้าสู่ระบบใหม่");
+
+      // ตรวจสอบว่ามีเสียงครบทุกข้อ
+      for (let i = 0; i < questions.length; i++) {
+        if (!audioChunks[i] || audioChunks[i].length === 0) {
+          return alert(`กรุณาอัดเสียงคำตอบข้อ ${i+1} ก่อน`);
+        }
+      }
+
+      try {
+        for (let i = 0; i < questions.length; i++) {
+          const blob = new Blob(audioChunks[i], { type: 'audio/webm' });
+          const fileName = `${currentUser.uid}_answer${i+1}.webm`;
+          const storageRef = storage.ref('audios/' + currentUser.uid + '/' + fileName);
+          await storageRef.put(blob);
+          const url = await storageRef.getDownloadURL();
+
+          await db.collection('submissions').add({
+            uid: currentUser.uid,
+            email: currentUser.email,
+            question: i+1,
+            audioUrl: url,
+            timestamp: new Date()
+          });
+        }
+
+        alert("ส่งไฟล์เสียงทั้งหมดเรียบร้อย!");
+        window.location.href = "index1.html"; // ไปหน้าต่อไป
+      } catch (err) {
+        console.error('เกิดข้อผิดพลาดในการอัปโหลด', err);
+        alert("เกิดข้อผิดพลาดในการส่งไฟล์เสียง");
+      }
+    }
+
+    document.getElementById('submitAllBtn').addEventListener('click', uploadAll);
+
+  </script>
+</body>
+</html>
