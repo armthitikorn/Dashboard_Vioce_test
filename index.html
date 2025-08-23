@@ -15,14 +15,34 @@
     }
     button { margin-right: 8px; }
   </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <h1>🎤 แบบทดสอบเสียงสำหรับพนักงานขายประกัน</h1>
-  <p><b>ชื่อผู้ทำแบบทดสอบ:</b> <input type="text" placeholder="กรอกชื่อของคุณ"></p>
+  <p><b>ชื่อผู้ทำแบบทดสอบ:</b> <input type="text" placeholder="กรอกชื่อของคุณ" id="userName"></p>
 
   <div id="questions"></div>
 
   <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyA4OrZERUoxWPiShCEWVvz1MK9cYGO3_K8",
+      authDomain: "new-record-3ccd6.firebaseapp.com",
+      projectId: "new-record-3ccd6",
+      storageBucket: "new-record-3ccd6.appspot.com",
+      messagingSenderId: "1065863160189",
+      appId: "1:1065863160189:web:25313e55b0733f5e126c14",
+      measurementId: "G-JW6N2HYR58"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+    const db = firebase.firestore();
+
+    // คำถาม
     const questions = [
       "ขอบคุณครับ แต่ตอนนี้ยังไม่สนใจประกัน",
       "ขอเวลาตัดสินใจก่อนครับ",
@@ -48,13 +68,14 @@
 
     const container = document.getElementById("questions");
 
+    // สร้าง UI สำหรับคำถามแต่ละข้อ
     questions.forEach((q, i) => {
       const div = document.createElement("div");
       div.className = "question";
       div.innerHTML = `
         <p><b>${i+1}. ${q}</b></p>
         <button onclick="startRecording(${i})">🎙️ เริ่มอัดเสียง</button>
-        <button onclick="stopRecording(${i})">⏹️ หยุดอัดเสียง</button>
+        <button onclick="stopRecording(${i})">⏹️ หยุดอัดเสียง & อัปโหลด</button>
         <button onclick="playRecording(${i})" id="playBtn${i}" disabled>▶️ ฟังเสียง</button>
         <a id="download${i}" style="display:none;" download="answer${i+1}.webm">⬇️ ดาวน์โหลด</a>
         <audio id="audio${i}" controls style="display:none;"></audio>
@@ -64,12 +85,13 @@
 
     let mediaRecorder;
     let audioChunks = {};
-    
+
     async function startRecording(index) {
       if (!navigator.mediaDevices) {
         alert("เบราว์เซอร์นี้ไม่รองรับการอัดเสียง");
         return;
       }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder = new MediaRecorder(stream);
       audioChunks[index] = [];
@@ -102,6 +124,10 @@
     function stopRecording(index) {
       if (mediaRecorder && mediaRecorder.state !== "inactive") {
         mediaRecorder.stop();
+
+        // อัปโหลดไฟล์ไป Firebase หลังหยุดอัด
+        const userName = document.getElementById('userName').value.trim() || "anonymous";
+        uploadRecording(index, userName);
       }
     }
 
@@ -109,7 +135,34 @@
       const audioEl = document.getElementById("audio"+index);
       audioEl.play();
     }
+
+    async function uploadRecording(index, userName) {
+      const blob = new Blob(audioChunks[index], { type: 'audio/webm' });
+      const fileName = `${userName.replace(/\s+/g,"_")}_answer${index+1}.webm`;
+      const storageRef = storage.ref('audios/' + fileName);
+
+      try {
+        await storageRef.put(blob);
+        const url = await storageRef.getDownloadURL();
+        console.log('อัปโหลดเรียบร้อย', url);
+
+        // บันทึกข้อมูลลง Firestore
+        await db.collection('submissions').add({
+          user: userName,
+          question: index + 1,
+          audioUrl: url,
+          timestamp: new Date()
+        });
+
+        alert(`อัปโหลดเสียงคำตอบข้อ ${index+1} เรียบร้อย`);
+      } catch (err) {
+        console.error('เกิดข้อผิดพลาดในการอัปโหลด', err);
+        alert("เกิดข้อผิดพลาดในการอัปโหลดไฟล์");
+      }
+    }
   </script>
 </body>
 </html>
+
+
 
