@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เข้าสู่ระบบ</title>
+    <title>เข้าสู่ระบบผู้ดูแลระบบ</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         body { font-family: 'Tahoma', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #333; }
@@ -16,8 +16,8 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>เข้าสู่ระบบ</h1>
-        <p>กรุณาเข้าสู่ระบบด้วยบัญชี Google เพื่อเริ่มทำแบบทดสอบ</p>
+        <h1>เข้าสู่ระบบผู้ดูแลระบบ</h1>
+        <p>กรุณาเข้าสู่ระบบด้วยบัญชี Google สำหรับผู้ดูแลระบบเท่านั้น</p>
         <button id="googleLoginBtn" class="google-btn">
             <i class="fab fa-google google-icon"></i> เข้าสู่ระบบด้วย Google
         </button>
@@ -25,8 +25,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"; // เพิ่มการ import Firestore
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4OrZERUoxWPiShCEWVvz1MK9cYGO3_K8",
@@ -40,19 +40,19 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app); // สร้างตัวแปรสำหรับ Firestore
+        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
         onAuthStateChanged(auth, async user => {
             if (user) {
-                // ตรวจสอบบทบาทของผู้ใช้ทันที
                 const userRoleDocRef = doc(db, "user_roles", user.uid);
                 const userRoleDoc = await getDoc(userRoleDocRef);
 
                 if (userRoleDoc.exists() && userRoleDoc.data().role === "admin") {
                     window.location.href = "dashboard.html";
                 } else {
-                    window.location.href = "recording_page.html?part=1";
+                    alert("บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้านี้");
+                    signOut(auth);
                 }
             }
         });
@@ -68,5 +68,3 @@
     </script>
 </body>
 </html>
-
-
