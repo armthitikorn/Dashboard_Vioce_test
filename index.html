@@ -12,20 +12,27 @@
         .google-btn { background-color: #4285F4; color: white; border: none; padding: 15px 20px; border-radius: 8px; font-size: 1.1em; cursor: pointer; transition: background-color 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
         .google-btn:hover { background-color: #357ae8; }
         .google-icon { width: 24px; height: 24px; }
+        .logged-in-message { display: none; margin-top: 20px; }
+        .logged-in-message button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; background-color: #28a745; color: white; }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h1>เข้าสู่ระบบ</h1>
-        <p>กรุณาเข้าสู่ระบบด้วยบัญชี Google เพื่อเริ่มทำแบบทดสอบ</p>
+        <p id="loginPrompt">กรุณาเข้าสู่ระบบด้วยบัญชี Google เพื่อเริ่มทำแบบทดสอบ</p>
         <button id="googleLoginBtn" class="google-btn">
             <i class="fab fa-google google-icon"></i> เข้าสู่ระบบด้วย Google
         </button>
+        <div id="loggedInMessage" class="logged-in-message">
+            <p id="greeting">สวัสดีครับ, ...</p>
+            <button id="proceedBtn">ดำเนินการต่อ</button>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4OrZERUoxWPiShCEWVvz1MK9cYGO3_K8",
@@ -39,11 +46,35 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        onAuthStateChanged(auth, user => {
+        onAuthStateChanged(auth, async user => {
+            const googleLoginBtn = document.getElementById('googleLoginBtn');
+            const loggedInMessage = document.getElementById('loggedInMessage');
+            const loginPrompt = document.getElementById('loginPrompt');
+            const proceedBtn = document.getElementById('proceedBtn');
+
             if (user) {
-                window.location.href = "recording_page.html?part=1";
+                googleLoginBtn.style.display = 'none';
+                loginPrompt.style.display = 'none';
+                loggedInMessage.style.display = 'block';
+                document.getElementById('greeting').textContent = `สวัสดีครับ, ${user.displayName || user.email}`;
+
+                proceedBtn.onclick = async () => {
+                    const userRoleDocRef = doc(db, "user_roles", user.uid);
+                    const userRoleDoc = await getDoc(userRoleDocRef);
+
+                    if (userRoleDoc.exists() && userRoleDoc.data().role === "admin") {
+                        window.location.href = "dashboard.html";
+                    } else {
+                        window.location.href = "recording_page.html?part=1";
+                    }
+                };
+            } else {
+                googleLoginBtn.style.display = 'block';
+                loginPrompt.style.display = 'block';
+                loggedInMessage.style.display = 'none';
             }
         });
 
