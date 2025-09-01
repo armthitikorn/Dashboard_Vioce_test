@@ -6,32 +6,51 @@
     <title>เข้าสู่ระบบ</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
+        /* สไตล์ CSS เดิม */
         body { font-family: 'Tahoma', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #333; }
         .login-container { background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
         h1 { color: #004085; margin-bottom: 20px; }
-        .google-btn { background-color: #4285F4; color: white; border: none; padding: 15px 20px; border-radius: 8px; font-size: 1.1em; cursor: pointer; transition: background-color 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
-        .google-btn:hover { background-color: #357ae8; }
-        .google-icon { width: 24px; height: 24px; }
-        .logged-in-message { display: none; margin-top: 20px; }
-        .logged-in-message button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; background-color: #28a745; color: white; }
+
+        /* สไตล์ใหม่สำหรับ Email/Password Login */
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .login-btn { width: 100%; padding: 15px; background-color: #007bff; color: white; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; }
+        .login-btn:hover { background-color: #0056b3; }
+        .divider { margin: 20px 0; border-bottom: 1px solid #ccc; line-height: 0.1em; text-align: center; }
+        .divider span { background: #fff; padding: 0 10px; }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h1>เข้าสู่ระบบ</h1>
-        <p id="loginPrompt">กรุณาเข้าสู่ระบบด้วยบัญชี Google เพื่อเริ่มทำแบบทดสอบ</p>
-        <button id="googleLoginBtn" class="google-btn">
+
+        <div id="adminLoginForm">
+            <p>สำหรับผู้ดูแลระบบ (Admin) เท่านั้น</p>
+            <div class="form-group">
+                <label for="adminEmail">อีเมล:</label>
+                <input type="email" id="adminEmail" placeholder="admin@example.com">
+            </div>
+            <div class="form-group">
+                <label for="adminPassword">รหัสผ่าน:</label>
+                <input type="password" id="adminPassword" placeholder="รหัสผ่าน">
+            </div>
+            <button id="adminLoginBtn" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ (Admin)
+            </button>
+        </div>
+
+        <div class="divider"><span>หรือ</span></div>
+
+        <p>สำหรับพนักงานทั่วไป</p>
+        <button id="googleLoginBtn" class="login-btn" style="background-color: #4285F4;">
             <i class="fab fa-google google-icon"></i> เข้าสู่ระบบด้วย Google
         </button>
-        <div id="loggedInMessage" class="logged-in-message">
-            <p id="greeting">สวัสดีครับ, ...</p>
-            <button id="proceedBtn">ดำเนินการต่อ</button>
-        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -47,45 +66,57 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
+        const googleProvider = new GoogleAuthProvider();
 
+        // ตรวจสอบการล็อกอินอัตโนมัติ (ยังคงไว้)
         onAuthStateChanged(auth, async user => {
-            const googleLoginBtn = document.getElementById('googleLoginBtn');
-            const loggedInMessage = document.getElementById('loggedInMessage');
-            const loginPrompt = document.getElementById('loginPrompt');
-            const proceedBtn = document.getElementById('proceedBtn');
-
             if (user) {
-                googleLoginBtn.style.display = 'none';
-                loginPrompt.style.display = 'none';
-                loggedInMessage.style.display = 'block';
-                document.getElementById('greeting').textContent = `สวัสดีครับ, ${user.displayName || user.email}`;
+                const userRoleDocRef = doc(db, "user_roles", user.uid);
+                const userRoleDoc = await getDoc(userRoleDocRef);
 
-                proceedBtn.onclick = async () => {
-                    const userRoleDocRef = doc(db, "user_roles", user.uid);
-                    const userRoleDoc = await getDoc(userRoleDocRef);
-
-                    if (userRoleDoc.exists() && userRoleDoc.data().role === "admin") {
-                        window.location.href = "dashboard.html";
-                    } else {
-                        window.location.href = "recording_page.html?part=1";
-                    }
-                };
-            } else {
-                googleLoginBtn.style.display = 'block';
-                loginPrompt.style.display = 'block';
-                loggedInMessage.style.display = 'none';
+                if (userRoleDoc.exists() && userRoleDoc.data().role === "admin") {
+                    window.location.href = "dashboard.html";
+                } else {
+                    window.location.href = "recording_page.html?part=1";
+                }
             }
         });
 
+        // Event listener สำหรับการล็อกอินด้วย Google (สำหรับพนักงาน)
         document.getElementById('googleLoginBtn').addEventListener('click', async () => {
             try {
-                await signInWithPopup(auth, provider);
+                await signInWithPopup(auth, googleProvider);
             } catch (error) {
-                console.error("Login failed:", error);
-                alert("การเข้าสู่ระบบล้มเหลว: " + error.message);
+                console.error("Google login failed:", error);
+                alert("การเข้าสู่ระบบด้วย Google ล้มเหลว: " + error.message);
+            }
+        });
+
+        // Event listener สำหรับการล็อกอินด้วย Email/Password (สำหรับ Admin)
+        document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // ตรวจสอบบทบาท Admin หลังจากล็อกอินสำเร็จ
+                const userRoleDocRef = doc(db, "user_roles", user.uid);
+                const userRoleDoc = await getDoc(userRoleDocRef);
+
+                if (userRoleDoc.exists() && userRoleDoc.data().role === "admin") {
+                    window.location.href = "dashboard.html";
+                } else {
+                    alert("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
+                    await auth.signOut();
+                }
+            } catch (error) {
+                console.error("Admin login failed:", error);
+                alert("เข้าสู่ระบบไม่สำเร็จ: " + error.message);
             }
         });
     </script>
 </body>
 </html>
+
