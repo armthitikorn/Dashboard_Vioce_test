@@ -18,6 +18,15 @@
         .controls select, .controls input[type="date"] { padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
         .controls button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
         .controls button:hover { background-color: #0056b3; }
+        #messageBox {
+            display: none;
+            background-color: #d1e7dd;
+            color: #0f5132;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -38,6 +47,7 @@
             <button id="searchBtn">ค้นหา</button>
         </div>
 
+        <div id="messageBox"></div>
         <div id="fileListContainer" class="dashboard-section">
             <p>กรุณาเลือกผู้ใช้งานและวันที่เพื่อแสดงไฟล์เสียง</p>
         </div>
@@ -49,6 +59,7 @@
         import { getFirestore, collection, getDocs, doc, getDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { getStorage, ref, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
+        // *** เปลี่ยนแปลงข้อมูล Firebase Project ของคุณที่นี่ ***
         const firebaseConfig = {
             apiKey: "AIzaSyA4OrZERUoxWPiShCEWVvz1MK9cYGO3_K8",
             authDomain: "new-record-3ccd6.firebaseapp.com",
@@ -63,6 +74,20 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
+
+        function showMessage(text, type = 'info') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = text;
+            messageBox.style.display = 'block';
+            if (type === 'error') {
+                messageBox.style.backgroundColor = '#f8d7da';
+                messageBox.style.color = '#721c24';
+            } else {
+                messageBox.style.backgroundColor = '#d1e7dd';
+                messageBox.style.color = '#0f5132';
+            }
+            setTimeout(() => { messageBox.style.display = 'none'; }, 5000);
+        }
 
         window.logout = function() {
             signOut(auth).then(() => {
@@ -87,6 +112,7 @@
                 });
             } catch (error) {
                 console.error(`Error fetching user list:`, error);
+                showMessage("ไม่สามารถโหลดรายชื่อผู้ใช้งานได้", "error");
             }
 
             for (const uid in uniqueUsers) {
@@ -100,6 +126,7 @@
         async function loadAudioFiles(userId, selectedDate) {
             const fileListContainer = document.getElementById("fileListContainer");
             fileListContainer.innerHTML = "<h4>กำลังโหลดรายการไฟล์...</h4>";
+            document.getElementById('messageBox').style.display = 'none';
 
             if (!userId || !selectedDate) {
                 fileListContainer.innerHTML = "<p>กรุณาเลือกผู้ใช้งานและวันที่</p>";
@@ -131,42 +158,14 @@
                     const data = doc.data();
                     const fileDiv = document.createElement("div");
                     fileDiv.className = "file-item";
+                    
+                    const timestampDate = data.timestamp.toDate();
+                    const formattedDate = `${timestampDate.toLocaleDateString()} ${timestampDate.toLocaleTimeString()}`;
+
                     fileDiv.innerHTML = `
                         <p><b>Part ${data.part} - คำถามที่ ${data.question}:</b> ${data.text}</p>
+                        <p><b>วันที่ส่ง:</b> ${formattedDate}</p>
                         <audio controls src="${data.audioUrl}"></audio>
                     `;
-                    fileListContainer.appendChild(fileDiv);
-                });
-            } catch (error) {
-                console.error("เกิดข้อผิดพลาดในการโหลดไฟล์:", error);
-                fileListContainer.innerHTML = "<p>เกิดข้อผิดพลาดในการโหลดไฟล์</p>";
-            }
-        }
+                    fileListContainer
 
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = "login.html";
-                return;
-            }
-
-            const userRoleDocRef = doc(db, "user_roles", user.uid);
-            const userRoleDoc = await getDoc(userRoleDocRef);
-
-            if (userRoleDoc.exists() && userRoleDoc.data().role === "admin") {
-                document.getElementById("userNameDisplay").textContent = user.email;
-                await fetchAllUsersAndLoadDropdown();
-            } else {
-                alert("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
-                signOut(auth);
-                window.location.href = "login.html";
-            }
-        });
-
-        document.getElementById('searchBtn').addEventListener('click', () => {
-            const selectedUserId = document.getElementById('userDropdown').value;
-            const selectedDate = document.getElementById('datePicker').value;
-            loadAudioFiles(selectedUserId, selectedDate);
-        });
-    </script>
-</body>
-</html>
